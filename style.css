@@ -746,13 +746,16 @@ p, .accordion-content li, .legal-block li {
 .contact-person {
   display: flex;
   gap: 1.25rem;
-  align-items: center;
+  /* stretch statt center: Das Foto reicht dadurch vom Namen bis zur Telefonnummer */
+  align-items: stretch;
   background: var(--dark-grey);
   padding: 1.5rem;
   border-left: 3px solid var(--orange);
 }
 .contact-person__photo {
-  width: 78px; height: 78px;
+  /* Feste Breite, Höhe wächst über den Textblock daneben: vom Namen bis zur Telefonnummer */
+  align-self: stretch;
+  width: 112px;
   border-radius: 0;
   background: var(--orange);
   flex-shrink: 0;
@@ -2098,6 +2101,8 @@ p, .accordion-content li, .legal-block li {
   .footer__grid     { grid-template-columns: 1fr; }
   .footer__bottom   { flex-direction: column; gap: 0.75rem; text-align: center; }
   .contact-person   { flex-direction: column; text-align: center; }
+  /* Gestapelt: festes Quadrat statt gestreckter Höhe */
+  .contact-person__photo { align-self: center; width: 96px; height: 96px; }
   .page-hero        { padding: 56px 0 80px; }
   .photo-carousel   { height: auto; aspect-ratio: 16 / 9; max-height: 240px; }
   .reference-pull   { padding: 2rem 1.5rem; }
