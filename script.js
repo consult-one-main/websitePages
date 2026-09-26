@@ -1,0 +1,769 @@
+
+// Mobile nav toggle
+const navToggle = document.getElementById('navToggle');
+const navLinks  = document.getElementById('navLinks');
+
+if (navToggle && navLinks) {
+  navToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', open);
+  });
+
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => navLinks.classList.remove('open'));
+  });
+
+  document.addEventListener('click', e => {
+    if (!navToggle.contains(e.target) && !navLinks.contains(e.target)) {
+      navLinks.classList.remove('open');
+    }
+  });
+}
+
+// Photo carousel with auto-play
+const carouselTrack = document.getElementById('carouselTrack');
+if (carouselTrack) {
+  const slides = carouselTrack.querySelectorAll('.photo-carousel__slide');
+  const prevBtn = document.getElementById('carouselPrev');
+  const nextBtn = document.getElementById('carouselNext');
+  const dotsContainer = document.getElementById('carouselDots');
+  let currentIndex = 0;
+  let autoPlayTimer;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'photo-carousel__dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Bild ' + (i + 1));
+    dot.addEventListener('click', () => { goTo(i); resetAutoPlay(); });
+    dotsContainer.appendChild(dot);
+  });
+
+  function goTo(index) {
+    currentIndex = (index + slides.length) % slides.length;
+    carouselTrack.style.transform = 'translateX(-' + (currentIndex * 100) + '%)';
+    dotsContainer.querySelectorAll('.photo-carousel__dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+  }
+
+  function startAutoPlay() {
+    autoPlayTimer = setInterval(() => goTo(currentIndex + 1), 3500);
+  }
+
+  function resetAutoPlay() {
+    clearInterval(autoPlayTimer);
+    startAutoPlay();
+  }
+
+  prevBtn.addEventListener('click', () => { goTo(currentIndex - 1); resetAutoPlay(); });
+  nextBtn.addEventListener('click', () => { goTo(currentIndex + 1); resetAutoPlay(); });
+
+  startAutoPlay();
+}
+
+// Partner spotlight carousel
+const partnerCarousel = document.getElementById('partnerCarousel');
+if (partnerCarousel) {
+  const items   = Array.from(partnerCarousel.querySelectorAll('.partner-carousel__item'));
+  const nameEl  = document.getElementById('partnerName');
+  const descEl  = document.getElementById('partnerDesc');
+  const prevBtn = document.getElementById('partnerPrev');
+  const nextBtn = document.getElementById('partnerNext');
+  const total   = items.length;
+  let current   = 0;
+  let timer;
+
+  function goTo(idx) {
+    current = (idx + total) % total;
+    const prev = (current - 1 + total) % total;
+    const next = (current + 1) % total;
+
+    items.forEach((item, i) => {
+      item.classList.remove('partner-carousel__item--active',
+                            'partner-carousel__item--prev',
+                            'partner-carousel__item--next');
+      if (i === current) item.classList.add('partner-carousel__item--active');
+      else if (i === prev) item.classList.add('partner-carousel__item--prev');
+      else if (i === next) item.classList.add('partner-carousel__item--next');
+    });
+
+    nameEl.textContent = items[current].querySelector('.partner-carousel__item-name').textContent;
+    descEl.textContent = items[current].querySelector('.partner-carousel__item-desc').textContent;
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => goTo(current + 1), 4500);
+  }
+
+  // Klick auf Nachbar-Logo springt direkt dahin
+  items.forEach((item, i) => {
+    item.addEventListener('click', () => {
+      if (i !== current) { goTo(i); resetTimer(); }
+    });
+  });
+
+  prevBtn.addEventListener('click', () => { goTo(current - 1); resetTimer(); });
+  nextBtn.addEventListener('click', () => { goTo(current + 1); resetTimer(); });
+
+  goTo(0);
+  resetTimer();
+}
+
+// Start-up-Karussell: 3 Karten in voller Größe, je 1 kleinerer Teaser links/rechts
+const startupCarousel = document.getElementById('startupCarousel');
+if (startupCarousel) {
+  const items   = Array.from(startupCarousel.querySelectorAll('.startup-card'));
+  const prevBtn = document.getElementById('startupPrev');
+  const nextBtn = document.getElementById('startupNext');
+  const total   = items.length;
+  let current   = 0;
+  let timer;
+
+  const stateClasses = [
+    'startup-card--teaser-prev',
+    'startup-card--prev',
+    'startup-card--active',
+    'startup-card--next',
+    'startup-card--teaser-next'
+  ];
+
+  function goTo(idx) {
+    current = (idx + total) % total;
+    const prev       = (current - 1 + total) % total;
+    const next       = (current + 1) % total;
+    const teaserPrev = (current - 2 + total) % total;
+    const teaserNext = (current + 2) % total;
+
+    items.forEach((item, i) => {
+      item.classList.remove(...stateClasses);
+      if (i === current) item.classList.add('startup-card--active');
+      else if (i === prev) item.classList.add('startup-card--prev');
+      else if (i === next) item.classList.add('startup-card--next');
+      else if (i === teaserPrev) item.classList.add('startup-card--teaser-prev');
+      else if (i === teaserNext) item.classList.add('startup-card--teaser-next');
+    });
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => goTo(current + 1), 4500);
+  }
+
+  prevBtn.addEventListener('click', () => { goTo(current - 1); resetTimer(); });
+  nextBtn.addEventListener('click', () => { goTo(current + 1); resetTimer(); });
+
+  // Auto-Play pausiert, solange Maus oder Tastaturfokus im Karussell sind
+  startupCarousel.addEventListener('mouseenter', () => clearInterval(timer));
+  startupCarousel.addEventListener('mouseleave', resetTimer);
+  startupCarousel.addEventListener('focusin', () => clearInterval(timer));
+  startupCarousel.addEventListener('focusout', resetTimer);
+
+  goTo(0);
+  resetTimer();
+}
+
+// Counter animation for stats, triggers when stats enter the viewport
+function animateCounter(el, target, suffix, duration) {
+  let startTime = null;
+  const step = (timestamp) => {
+    if (!startTime) startTime = timestamp;
+    const progress = Math.min((timestamp - startTime) / duration, 1);
+    // ease-out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(eased * target) + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const statEls = document.querySelectorAll('.stat__number:not(.stat__number--static)');
+if (statEls.length > 0) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const raw = el.textContent.trim();
+        const suffix = raw.includes('+') ? '+' : '';
+        const target = parseInt(raw.replace('+', ''), 10);
+        animateCounter(el, target, suffix, 2600);
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.6 });
+
+  statEls.forEach(el => observer.observe(el));
+}
+
+// Kompetenz-Selector ("Das lernst du" – fuer-studierende.html)
+const competencyTabs = document.querySelectorAll('.competency-btn');
+if (competencyTabs.length > 0) {
+  const panel = document.getElementById('competencyPanel');
+  const panelText = document.getElementById('competencyPanelText');
+  const trainingImgs = document.querySelectorAll('#trainingImgWrapper .training-img');
+
+  // Reihenfolge muss zu den Buttons im Markup passen (data-panel 0-4)
+  const competencyContent = [
+    'Du übernimmst von Anfang an Verantwortung in echten Kundenprojekten: von der Angebotserstellung über die Zeitplanung bis zur Abschlusspräsentation. Erfahrene Mitglieder, die genau diesen Weg selbst gegangen sind, begleiten dich dabei.',
+    'In internen Trainings und bei echten Kundenpräsentationen übst du, komplexe Inhalte klar rüberzubringen: vor Geschäftsführer:innen, vor ganzen Unternehmen. Für die nächste Uni-Präsentation hilft dir das ganz nebenbei auch.',
+    'Ob bei der Kundengewinnung oder in internen Abstimmungen: Workshops zu Verhandlungstechniken und die Praxis in echten Projekten geben dir das Handwerkszeug für unbequeme Gespräche. Das zahlt sich später genauso bei Gehaltsverhandlungen oder Verhandlungen mit Unternehmen aus.',
+    'Case Studies und die Arbeit an echten Problemstellungen zwingen dich, komplexe Themen in überschaubare Teile zu zerlegen. Genau das setzen Beratungen beim Jobeinstieg voraus.',
+    'Du arbeitest in wechselnden Projektteams mit Kommiliton:innen aus ganz unterschiedlichen Studiengängen zusammen und lernst, wie Zusammenarbeit auch dann funktioniert, wenn nicht alle gleich ticken.'
+  ];
+
+  function activateCompetency(tab) {
+    competencyTabs.forEach(t => {
+      const active = t === tab;
+      t.classList.toggle('is-active', active);
+      t.setAttribute('aria-selected', String(active));
+      t.setAttribute('tabindex', active ? '0' : '-1');
+    });
+    const index = parseInt(tab.dataset.panel, 10);
+    panelText.textContent = competencyContent[index];
+    panel.setAttribute('aria-labelledby', tab.id);
+    trainingImgs.forEach(img => {
+      img.classList.toggle('is-active', parseInt(img.dataset.panel, 10) === index);
+    });
+  }
+
+  const tabList = Array.from(competencyTabs);
+  tabList.forEach((tab, i) => {
+    tab.addEventListener('click', () => activateCompetency(tab));
+    tab.addEventListener('keydown', (e) => {
+      let nextTab = null;
+      if (e.key === 'ArrowDown') nextTab = tabList[(i + 1) % tabList.length];
+      else if (e.key === 'ArrowUp') nextTab = tabList[(i - 1 + tabList.length) % tabList.length];
+      else if (e.key === 'Home') nextTab = tabList[0];
+      else if (e.key === 'End') nextTab = tabList[tabList.length - 1];
+      if (nextTab) {
+        e.preventDefault();
+        nextTab.focus();
+        activateCompetency(nextTab);
+      }
+    });
+  });
+}
+
+// Anstehende Termine (fuer-studierende.html)
+// Die Termine selbst stehen in data/termine.json, damit sie ohne Code-Kenntnisse
+// direkt im GitHub-Browser gepflegt werden können – siehe PFLEGE.md.
+const eventsGrid = document.getElementById('eventsGrid');
+if (eventsGrid) {
+  const emptyState = document.getElementById('eventsEmpty');
+
+  function showEventsEmpty() {
+    eventsGrid.hidden = true;
+    if (emptyState) emptyState.hidden = false;
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function icsEscape(text) {
+    return String(text).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+  }
+
+  // Baut einen data:-Link mit .ics-Inhalt; DTSTART/DTEND bleiben ohne 'Z'/TZID
+  // (floating time), da alle Termine in Braunschweig stattfinden.
+  function buildIcsHref(ev, slug) {
+    const [y, m, d] = ev.date.split('-').map(Number);
+    const start = new Date(y, m - 1, d, ev.hour, ev.minute);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const stamp = (dt) => dt.getFullYear() + pad(dt.getMonth() + 1) + pad(dt.getDate())
+      + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + '00';
+    const now = new Date();
+    const dtstamp = now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate())
+      + 'T' + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + 'Z';
+    const locationText = ev.location || 'Ort wird noch bekannt gegeben';
+
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Consult One//Termine//DE',
+      'BEGIN:VEVENT',
+      'UID:' + slug + '@consult-one.de',
+      'DTSTAMP:' + dtstamp,
+      'DTSTART:' + stamp(start),
+      'DTEND:' + stamp(end),
+      'SUMMARY:' + icsEscape(ev.title),
+      'DESCRIPTION:' + icsEscape(ev.desc),
+      'LOCATION:' + icsEscape(locationText),
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ];
+    return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(lines.join('\r\n'));
+  }
+
+  function renderEvents(events) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Abgelaufene Termine verschwinden von selbst; alte Einträge müssen nicht
+    // aus data/termine.json gelöscht werden.
+    const upcoming = events.filter(ev => !ev.date || new Date(ev.date) >= today);
+
+    if (upcoming.length === 0) {
+      showEventsEmpty();
+      return;
+    }
+
+    const formatter = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: '2-digit', month: 'long' });
+    eventsGrid.hidden = false;
+    if (emptyState) emptyState.hidden = true;
+    eventsGrid.innerHTML = upcoming.map((ev) => {
+      const dateTimeLabel = ev.date
+        ? formatter.format(new Date(ev.date)) + (ev.timeLabel ? ', ' + ev.timeLabel : '')
+        : 'Termin folgt';
+      const locationLabel = ev.noLocation ? '' : (ev.location || 'Ort wird noch bekannt gegeben');
+      let icsButton = '';
+      if (ev.signupUrl) {
+        icsButton = '<a class="event-card__ics event-card__ics--primary" href="' + ev.signupUrl + '" target="_blank" rel="noopener noreferrer">Anmelden</a>';
+      } else if (ev.date) {
+        const slug = ev.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + ev.date;
+        icsButton = '<a class="event-card__ics" href="' + buildIcsHref(ev, slug) + '" download="' + slug + '.ics">In Kalender speichern</a>';
+      } else {
+        icsButton = '<span class="event-card__ics event-card__ics--disabled">Termin folgt</span>';
+      }
+      return '<div class="event-card">'
+        + '<p class="event-card__datetime">' + dateTimeLabel + '</p>'
+        + '<h3>' + ev.title + '</h3>'
+        + (locationLabel ? '<p class="event-card__location">' + locationLabel + '</p>' : '')
+        + '<p class="event-card__desc">' + ev.desc + '</p>'
+        + icsButton
+        + '</div>';
+    }).join('');
+  }
+
+  // Jeder Fehler – Datei fehlt, JSON hat einen Tippfehler, Netzwerk weg – landet im
+  // bereits vorhandenen Leerzustand. Ein falsches Komma in data/termine.json darf die
+  // Seite nie zerbrechen.
+  fetch('data/termine.json', { cache: 'no-cache' })
+    .then(res => {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(data => {
+      if (!Array.isArray(data)) throw new Error('data/termine.json enthält keine Liste');
+      const valid = data.filter(ev => ev && typeof ev.title === 'string' && typeof ev.desc === 'string');
+      if (valid.length === 0) {
+        showEventsEmpty();
+        return;
+      }
+      renderEvents(valid);
+    })
+    .catch(err => {
+      console.error('Termine konnten nicht geladen werden:', err);
+      showEventsEmpty();
+    });
+}
+
+// Akkordeon: sanftes Auf-/Zuklappen per Web Animations API, nur ein Panel pro Gruppe offen
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function createAccordionItem(details, onExpand) {
+  const summary = details.querySelector(':scope > summary');
+  const content = details.querySelector(':scope > .accordion-content');
+  let animation = null;
+  let isExpanding = false;
+  let isClosing = false;
+
+  function runAnimation(opening) {
+    const startHeight = details.offsetHeight + 'px';
+    const endHeight = opening
+      ? (summary.offsetHeight + content.offsetHeight) + 'px'
+      : summary.offsetHeight + 'px';
+
+    isExpanding = opening;
+    isClosing = !opening;
+    details.style.overflow = 'hidden';
+
+    if (animation) animation.cancel();
+    animation = details.animate(
+      { height: [startHeight, endHeight] },
+      { duration: reduceMotion ? 0 : 280, easing: 'ease' }
+    );
+    animation.onfinish = () => {
+      details.open = opening;
+      animation = null;
+      isExpanding = false;
+      isClosing = false;
+      details.style.height = '';
+      details.style.overflow = '';
+    };
+    animation.oncancel = () => { isExpanding = false; isClosing = false; };
+  }
+
+  function expand() {
+    details.style.overflow = 'hidden';
+    details.style.height = details.offsetHeight + 'px';
+    details.open = true;
+    requestAnimationFrame(() => runAnimation(true));
+  }
+
+  function collapse() {
+    runAnimation(false);
+  }
+
+  summary.addEventListener('click', e => {
+    e.preventDefault();
+    if (isClosing || !details.open) {
+      onExpand(item);
+      expand();
+    } else if (isExpanding || details.open) {
+      collapse();
+    }
+  });
+
+  const item = { details, collapse, get isExpanding() { return isExpanding; } };
+  return item;
+}
+
+document.querySelectorAll('.accordion').forEach(group => {
+  const items = [];
+  group.querySelectorAll(':scope > .accordion-item').forEach(details => {
+    items.push(createAccordionItem(details, opened => {
+      items.forEach(other => {
+        if (other !== opened && (other.details.open || other.isExpanding)) other.collapse();
+      });
+    }));
+  });
+});
+
+// Hero-Video (Startseite): Die Clips aus data-videos laufen nacheinander, dazwischen
+// wird die Fläche langsam dunkel und der nächste Clip blendet wieder ein. Zwei
+// <video>-Elemente wechseln sich ab. Der nächste Clip lädt erst, wenn der laufende
+// komplett geladen ist, und es wird nur überblendet, wenn er ruckelfrei durchspielen
+// kann; sonst wiederholt sich der aktuelle Clip. Ohne JS und bei reduced-motion
+// loopt nur der erste Clip aus dem Markup.
+function initHeroVideos() {
+  const stage = document.querySelector('.hero__img[data-videos]');
+  const first = stage && stage.querySelector('.hero-vid');
+  const clips = stage ? stage.dataset.videos.split(',').map(src => src.trim()).filter(Boolean) : [];
+  if (!first || clips.length < 2) return;
+
+  // Datensparmodus oder sehr langsames Netz (nur Chromium-Browser melden das):
+  // Video gar nicht erst laden, das Poster bleibt stehen.
+  const conn = navigator.connection;
+  if (conn && (conn.saveData || /^(slow-2g|2g|3g)$/.test(conn.effectiveType))) {
+    first.removeAttribute('src');
+    first.load();
+    return;
+  }
+
+  // Unter 769px ist das Hero-Bild ausgeblendet: das Video dort gar nicht erst laden,
+  // erst wenn das Fenster später breiter wird (z. B. Tablet quer).
+  const wide = window.matchMedia('(min-width: 769px)');
+  if (!wide.matches) {
+    first.removeAttribute('src');
+    first.load();
+    wide.addEventListener('change', e => {
+      if (!e.matches) return;
+      first.src = clips[0];
+      playHeroVideos(stage, first, clips);
+    }, { once: true });
+    return;
+  }
+  playHeroVideos(stage, first, clips);
+}
+
+function playHeroVideos(stage, first, clips) {
+  if (!stage.animate || reduceMotion) return;
+
+  const FADE_OUT = 1500;      // ms, Clip blendet aus
+  const HOLD = 400;           // ms, Fläche bleibt dunkel
+  const FADE_IN = 1500;       // ms, nächster Clip blendet ein
+  const START_TIMEOUT = 8000; // ms, so lange darf der nächste Clip zum Starten brauchen
+  const LEAD = (FADE_OUT + 300) / 1000; // s vor Clipende, Puffer für das grobe timeupdate-Intervall
+
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const fade = (el, from, to, ms) => el.animate(
+    [{ opacity: from }, { opacity: to }],
+    { duration: ms, easing: 'ease-in-out', fill: 'forwards' }
+  ).finished;
+  const fullyLoaded = video => {
+    const b = video.buffered;
+    return b.length > 0 && video.duration > 0 && b.end(b.length - 1) >= video.duration - 0.3;
+  };
+
+  let current = first;
+  let standby = document.createElement('video');
+  let index = 0;
+  let switching = false;
+
+  // Das erste Video wird später zum Puffer; dafür muss es vollständig vorladen dürfen.
+  first.loop = false;
+  first.preload = 'auto';
+
+  standby.className = 'hero-vid hero-vid--queued';
+  standby.muted = true;
+  standby.playsInline = true;
+  standby.preload = 'auto'; // lädt erst, sobald src gesetzt ist
+  stage.appendChild(standby);
+
+  // Der nächste Clip soll nicht um Bandbreite mit dem laufenden konkurrieren
+  // (Seitenaufbau, langsames Netz): Er wird erst geladen, wenn der laufende komplett da ist.
+  const cueNext = () => {
+    if (standby.getAttribute('src') || !fullyLoaded(current)) return;
+    standby.src = clips[(index + 1) % clips.length];
+  };
+  const nextIsReady = () => standby.readyState >= 4; // Browser: spielt ohne Ruckeln durch
+
+  async function advance() {
+    if (switching) return;
+    switching = true;
+    const outgoing = current;
+    await fade(outgoing, 1, 0, FADE_OUT);
+    await wait(HOLD);
+
+    // Der nächste Clip blendet erst ein, wenn er wirklich läuft. Startet er trotz
+    // Bereitschaft nicht, läuft der aktuelle Clip noch einmal.
+    const incoming = standby;
+    const started = await Promise.race([
+      incoming.play().then(() => true, () => false),
+      wait(START_TIMEOUT).then(() => false)
+    ]);
+    if (started) {
+      outgoing.pause();
+      outgoing.autoplay = false; // sonst startet es mit einem neuen src von allein
+      outgoing.removeAttribute('src');
+      outgoing.load();
+      current = incoming;
+      standby = outgoing;
+      index = (index + 1) % clips.length;
+    } else {
+      incoming.pause();
+      outgoing.currentTime = 0;
+      outgoing.play().catch(() => {});
+    }
+    await fade(current, 0, 1, FADE_IN);
+    switching = false;
+  }
+
+  [first, standby].forEach(video => {
+    video.addEventListener('timeupdate', () => {
+      if (video !== current) return;
+      cueNext();
+      if (!switching && nextIsReady() && video.duration - video.currentTime <= LEAD) advance();
+    });
+    video.addEventListener('ended', () => {
+      if (video !== current || switching) return;
+      if (nextIsReady()) {
+        advance();
+      } else {
+        video.currentTime = 0; // nächster Clip noch nicht bereit: aktuellen wiederholen
+        video.play().catch(() => {});
+      }
+    });
+  });
+}
+
+initHeroVideos();
+
+// Leistungen: Kategorie-Tabs
+const servicesTablist = document.querySelector('.services-tabs');
+if (servicesTablist) {
+  const tabs = Array.from(servicesTablist.querySelectorAll('.services-tab'));
+  const panels = tabs.map(tab => document.getElementById(tab.getAttribute('aria-controls')));
+
+  function activateServicesTab(tab, { focus = true } = {}) {
+    tabs.forEach((t, i) => {
+      const selected = t === tab;
+      t.setAttribute('aria-selected', String(selected));
+      t.tabIndex = selected ? 0 : -1;
+      panels[i].hidden = !selected;
+    });
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => activateServicesTab(tab, { focus: false }));
+    tab.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); activateServicesTab(tabs[(i + 1) % tabs.length]); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); activateServicesTab(tabs[(i - 1 + tabs.length) % tabs.length]); }
+    });
+  });
+
+  function activateServicesTabFromHash() {
+    const tab = tabs.find(t => t.id === location.hash.slice(1));
+    if (tab) activateServicesTab(tab, { focus: false });
+  }
+  activateServicesTabFromHash();
+  window.addEventListener('hashchange', activateServicesTabFromHash);
+}
+
+// Prozess-Ablauf (Projektablauf / Bewerbungsweg): Kopfzeile pinnt beim Scrollen,
+// die Schrittreihe läuft dabei seitlich mit. Ohne JS bzw. bei reduced-motion
+// bleibt die Reihe eine normale, horizontal scrollbare Liste (siehe CSS).
+function initProcessFlow(root) {
+  const sticky    = root.querySelector('.process-flow__sticky');
+  const heading   = sticky.querySelector('.container');
+  const viewport  = root.querySelector('.process-flow__viewport');
+  const track     = root.querySelector('.process-flow__track');
+  const cards     = Array.from(track.querySelectorAll('.process-flow__card'));
+  const total     = cards.length;
+  const navHeight = 70;
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const desktopMq = window.matchMedia('(min-width: 900px)');
+
+  let maxShift = 0;
+  let active = false;
+
+  function measure() {
+    track.style.transform = 'none';
+    root.classList.remove('process-flow--pinned');
+
+    // Erste/letzte Karte sollen an der Überschrift ausgerichtet starten und
+    // enden, statt an einem festen Abstand vom Bildschirmrand zu kleben.
+    if (heading) {
+      const inset = Math.max(32, heading.getBoundingClientRect().left);
+      root.style.setProperty('--process-flow-inset', inset + 'px');
+    }
+
+    maxShift = Math.max(0, track.scrollWidth - viewport.clientWidth);
+
+    // Nur pinnen, wenn der angepinnte Inhalt auch unter die Navi passt,
+    // sonst bliebe der untere Teil des Bildschirms unerreichbar.
+    const fitsVertically = sticky.offsetHeight <= (window.innerHeight - navHeight) + 60;
+    active = desktopMq.matches && !reduceMotion && maxShift > 0 && fitsVertically;
+
+    if (active) {
+      root.classList.add('process-flow--pinned');
+      root.style.height = (sticky.offsetHeight + maxShift) + 'px';
+      // Bewegung läuft komplett über den transform unten, nicht über
+      // natives Scrollen im Viewport.
+      viewport.scrollLeft = 0;
+    } else {
+      root.style.height = 'auto';
+    }
+    onScroll();
+  }
+
+  function onScroll() {
+    if (!active) { track.style.transform = 'none'; return; }
+    const rect = root.getBoundingClientRect();
+    const progress = Math.max(0, Math.min(1, (navHeight - rect.top) / maxShift));
+    track.style.transform = 'translate3d(' + (-progress * maxShift) + 'px,0,0)';
+    root.style.setProperty('--process-flow-progress', progress);
+
+    const currentIndex = Math.max(0, Math.min(total - 1, Math.round(progress * (total - 1))));
+    cards.forEach((card, i) => card.classList.toggle('is-passed', i <= currentIndex));
+  }
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { onScroll(); ticking = false; });
+  }, { passive: true });
+  window.addEventListener('resize', measure);
+
+  // Tastaturfokus in einer Karte bringt diese ins Bild, auch während gepinnt.
+  track.addEventListener('focusin', e => {
+    if (!active) return;
+    const card = e.target.closest('.process-flow__card');
+    if (!card) return;
+    const index = cards.indexOf(card);
+    const targetProgress = total > 1 ? index / (total - 1) : 0;
+    const docTop = root.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: docTop - navHeight + targetProgress * maxShift, behavior: 'smooth' });
+  });
+
+  measure();
+}
+
+document.querySelectorAll('.process-flow').forEach(initProcessFlow);
+
+// Cal.com-Terminbuchung: Embed wird erst beim Klick nachgeladen, nicht beim
+// Seitenaufruf, damit vor der Buchungsabsicht keine Daten an app.cal.com fließen.
+function initCalBooking() {
+  const trigger = document.getElementById('calBookingTrigger');
+  if (!trigger) return;
+
+  const CAL_NAMESPACE = 'erstgespraech';
+  const FALLBACK_URL = 'https://cal.com/consultone/erstgespraech';
+  let loading = false;
+
+  function loadCalEmbed(onReady) {
+    (function (C, A, L) {
+      let p = function (a, ar) { a.q.push(ar); };
+      let d = C.document;
+      C.Cal = C.Cal || function () {
+        let cal = C.Cal;
+        let ar = arguments;
+        if (!cal.loaded) {
+          cal.ns = {};
+          cal.q = cal.q || [];
+          const script = d.createElement('script');
+          script.src = A;
+          script.onload = onReady;
+          d.head.appendChild(script);
+          cal.loaded = true;
+        }
+        if (ar[0] === L) {
+          const api = function () { p(api, arguments); };
+          const namespace = ar[1];
+          api.q = api.q || [];
+          if (typeof namespace === 'string') {
+            cal.ns[namespace] = cal.ns[namespace] || api;
+            p(cal.ns[namespace], ar);
+            p(cal, ['initNamespace', namespace]);
+          } else {
+            p(cal, ar);
+          }
+          return;
+        }
+        p(cal, ar);
+      };
+    })(window, 'https://app.cal.com/embed/embed.js', 'init');
+
+    Cal('init', CAL_NAMESPACE, { origin: 'https://app.cal.com' });
+    Cal.config = Cal.config || {};
+    Cal.config.forwardQueryParams = true;
+    Cal.ns[CAL_NAMESPACE]('ui', {
+      cssVarsPerTheme: { light: { 'cal-brand': '#333333' } },
+      hideEventTypeDetails: false,
+      layout: 'month_view'
+    });
+  }
+
+  trigger.addEventListener('click', e => {
+    // Embed bereits geladen: Cal.com hat inzwischen seinen eigenen Klick-Handler
+    // an diesen Button gehängt, der übernimmt jetzt.
+    if (window.Cal && window.Cal.loaded) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (loading) return;
+    loading = true;
+
+    const fallbackTimer = setTimeout(() => {
+      window.open(FALLBACK_URL, '_blank', 'noopener');
+    }, 6000);
+
+    loadCalEmbed(() => {
+      requestAnimationFrame(() => {
+        clearTimeout(fallbackTimer);
+        // Denselben Klick erneut auslösen, jetzt wo Cal.com seinen Handler
+        // an data-cal-link-Elemente gebunden hat.
+        trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      });
+    });
+  });
+}
+
+initCalBooking();
+
+// E-Mail-Links: mailto-href erst per JS zusammensetzen, damit einfache
+// Crawler ihn nicht direkt aus dem HTML-Quelltext lesen können. Der sichtbare
+// Text bleibt in jedem Fall lesbar, auch ohne JavaScript.
+function initMailLinks() {
+  document.querySelectorAll('a[data-mail-user]').forEach(link => {
+    const user = link.getAttribute('data-mail-user');
+    const domain = link.getAttribute('data-mail-domain');
+    if (user && domain) {
+      link.href = 'mailto:' + user + '@' + domain;
+    }
+  });
+}
+
+initMailLinks();
