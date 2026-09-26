@@ -262,7 +262,7 @@ p, .accordion-content li, .legal-block li {
   object-position: center;
   display: block;
   opacity: 0;
-  animation: heroFadeIn 2.4s ease forwards;
+  animation: heroFadeIn 0.8s ease forwards;
 }
 
 /* Nachfolgende Clips der Hero-Playlist: starten unsichtbar, script.js blendet sie ein */
