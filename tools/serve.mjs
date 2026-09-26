@@ -31,8 +31,14 @@ const MIME = {
 // bedient, alles Unbekannte landet auf 404.html.
 function resolve(urlPath) {
   const candidates = [urlPath];
-  if (urlPath.endsWith('/')) candidates.push(urlPath + 'index.html');
-  else candidates.push(urlPath + '/index.html');
+  if (urlPath.endsWith('/')) {
+    candidates.push(urlPath + 'index.html');
+  } else {
+    // Reihenfolge wie bei GitHub Pages: /impressum liefert impressum.html,
+    // nicht impressum/index.html.
+    candidates.push(urlPath + '.html');
+    candidates.push(urlPath + '/index.html');
+  }
   for (const c of candidates) {
     const f = path.join(ROOT, c);
     try { if (fs.statSync(f).isFile()) return f; } catch {}
