@@ -93,7 +93,7 @@ if (partnerCarousel) {
 
   function resetTimer() {
     clearInterval(timer);
-    timer = setInterval(() => goTo(current + 1), 4500);
+    timer = setInterval(() => goTo(current + 1), 7000);
   }
 
   // Klick auf Nachbar-Logo springt direkt dahin
