@@ -19,13 +19,11 @@
   },
   {
     "title": "Women's Brunch",
-    "date": "2026-11-14",
+    "date": null,
     "hour": null,
     "minute": null,
     "timeLabel": null,
     "location": null,
-    "noLocation": true,
-    "signupUrl": "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=qs3KSFmk1UWe0F6KJGfYw2LgQ8yg04xHjc407oQw6SVUN0tLWkhKNktaNEpaMkZBVzhNSU0zM0hMUi4u",
     "desc": "Ein entspannter Brunch für alle Frauen, die Consult One in lockerer Atmosphäre kennenlernen möchten."
   },
   {
